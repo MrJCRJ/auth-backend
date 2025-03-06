@@ -102,7 +102,7 @@ app.get(
       process.env.JWT_SECRET,
       { expiresIn: "1h" }
     );
-    res.redirect(`http://localhost:3000?token=${token}`); // Redirecione para o frontend com o token
+    res.redirect(`https://my-history-frontend-git-main-jose-ciceros-projects.vercel.app/${token}`); // Redirecione para o frontend com o token
   }
 );
 
