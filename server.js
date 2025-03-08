@@ -36,6 +36,7 @@ const UserSchema = new mongoose.Schema({
   email: { type: String, required: true, unique: true },
   password: { type: String },
   googleId: { type: String }, // ID do Google
+  name: { type: String }, // Nome do usuário
   role: { type: String, default: "user" }, // "user" ou "admin"
 });
 
@@ -45,9 +46,9 @@ const User = mongoose.model("User", UserSchema);
 passport.use(
   new GoogleStrategy(
     {
-      clientID: process.env.GOOGLE_CLIENT_ID, // Client ID do Google
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET, // Client Secret do Google
-      callbackURL: "https://auth-backend-jose-ciceros-projects.vercel.app/auth/google/callback", // URL de callback
+      clientID: process.env.GOOGLE_CLIENT_ID,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+      callbackURL: "https://auth-backend-jose-ciceros-projects.vercel.app/auth/google/callback",
     },
     async (accessToken, refreshToken, profile, done) => {
       try {
@@ -59,6 +60,7 @@ passport.use(
           user = new User({
             googleId: profile.id,
             email: profile.emails[0].value, // Email do Google
+            name: profile.displayName, // Nome do Google
           });
           await user.save();
         }
@@ -98,51 +100,18 @@ app.get(
   (req, res) => {
     // Gere um token JWT para o usuário
     const token = jwt.sign(
-      { id: req.user._id, email: req.user.email, role: req.user.role }, // Inclua o email aqui
+      {
+        id: req.user._id,
+        email: req.user.email,
+        name: req.user.name, // Inclua o nome aqui
+        role: req.user.role,
+      },
       process.env.JWT_SECRET,
       { expiresIn: "1h" }
     );
     res.redirect(`https://my-history-frontend-git-main-jose-ciceros-projects.vercel.app?token=${token}`); // Redirecione para o frontend com o token
   }
 );
-
-// Rota de Registro Manual (opcional)
-app.post("/register", async (req, res) => {
-  const { email, password } = req.body;
-
-  try {
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const user = new User({ email, password: hashedPassword });
-    await user.save();
-    res.status(201).json({ message: "Usuário registrado com sucesso!" });
-  } catch (err) {
-    res.status(500).json({ message: "Erro ao registrar usuário", error: err });
-  }
-});
-
-// Rota de Login Manual (opcional)
-app.post("/login", async (req, res) => {
-  const { email, password } = req.body;
-
-  try {
-    const user = await User.findOne({ email });
-    if (!user) {
-      return res.status(400).json({ message: "Usuário não encontrado" });
-    }
-
-    const isPasswordValid = await bcrypt.compare(password, user.password);
-    if (!isPasswordValid) {
-      return res.status(400).json({ message: "Senha incorreta" });
-    }
-
-    const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, {
-      expiresIn: "1h",
-    });
-    res.status(200).json({ token });
-  } catch (err) {
-    res.status(500).json({ message: "Erro ao fazer login", error: err });
-  }
-});
 
 // Inicie o servidor
 const PORT = process.env.PORT || 5001;
