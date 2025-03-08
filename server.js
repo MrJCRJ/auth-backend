@@ -52,6 +52,8 @@ passport.use(
     },
     async (accessToken, refreshToken, profile, done) => {
       try {
+        console.log("Perfil do Google:", profile); // Verifique o perfil retornado pelo Google
+
         // Verifique se o usuário já está registrado
         let user = await User.findOne({ googleId: profile.id });
 
@@ -62,6 +64,10 @@ passport.use(
             email: profile.emails[0].value, // Email do Google
             name: profile.displayName, // Nome do Google
           });
+          await user.save();
+        } else {
+          // Atualize o nome do usuário se ele já existir
+          user.name = profile.displayName;
           await user.save();
         }
 
@@ -98,6 +104,8 @@ app.get(
   "/auth/google/callback",
   passport.authenticate("google", { failureRedirect: "/login" }),
   (req, res) => {
+    console.log("Usuário autenticado:", req.user); // Verifique o objeto req.user
+
     // Gere um token JWT para o usuário
     const token = jwt.sign(
       {
