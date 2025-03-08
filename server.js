@@ -48,7 +48,7 @@ passport.use(
     {
       clientID: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-      callbackURL: "https://auth-backend-jose-ciceros-projects.vercel.app/auth/google/callback",
+      callbackURL: process.env.CALLBACK_URL,
     },
     async (accessToken, refreshToken, profile, done) => {
       try {
@@ -109,7 +109,7 @@ app.get(
       process.env.JWT_SECRET,
       { expiresIn: "1h" }
     );
-    res.redirect(`https://my-history-frontend-git-main-jose-ciceros-projects.vercel.app?token=${token}`); // Redirecione para o frontend com o token
+    res.redirect(`${process.env.REDIRECT_URL}?token=${token}`); // Redirecione para o frontend com o token
   }
 );
 
